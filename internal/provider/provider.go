@@ -117,6 +117,10 @@ func (p *volcanoProvider) Resources(_ context.Context) []func() resource.Resourc
 		NewFunctionSchedulerResource,
 		NewDurableFunctionResource,
 		NewDurableFunctionSchedulerResource,
+		NewFrontendResource,
+		NewFrontendDomainResource,
+		NewFrontendFunctionRouteResource,
+		NewFrontendSharedVariablesResource,
 	}
 }
 
@@ -130,5 +134,6 @@ func (p *volcanoProvider) DataSources(_ context.Context) []func() datasource.Dat
 		NewFunctionRuntimesDataSource,
 		NewFunctionDeploymentsDataSource,
 		NewDurableFunctionDeploymentsDataSource,
+		NewFrontendDeploymentsDataSource,
 	}
 }

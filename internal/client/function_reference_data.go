@@ -63,3 +63,12 @@ func (c *Client) ListDurableFunctionDeployments(ctx context.Context, projectID, 
 	}
 	return out.Data, nil
 }
+
+func (c *Client) ListFrontendDeployments(ctx context.Context, projectID, frontendID string) ([]FunctionDeployment, error) {
+	var out Page[FunctionDeployment]
+	path := "/projects/" + EncodePathSegment(projectID) + "/frontends/" + EncodePathSegment(frontendID) + "/deployments"
+	if err := c.Request(ctx, "GET", path, nil, nil, &out); err != nil {
+		return nil, err
+	}
+	return out.Data, nil
+}

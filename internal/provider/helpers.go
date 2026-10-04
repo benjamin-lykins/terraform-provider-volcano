@@ -286,6 +286,62 @@ func functionSchedulerModelFromAPI(ctx context.Context, projectID, functionID st
 	return m, diags
 }
 
+func frontendModelFromAPI(ctx context.Context, projectID string, source types.String, f *client.Frontend, diags *diag.Diagnostics) frontendResourceModel {
+	variables := stringList(ctx, f.DeclaredVariables, diags)
+	return frontendResourceModel{
+		ID:              types.StringValue(f.ID),
+		ProjectID:       types.StringValue(projectID),
+		Name:            types.StringValue(f.Name),
+		Source:          source,
+		AppRoot:         stringOrNull(f.AppRoot),
+		Framework:       stringOrNull(f.Framework),
+		VariableScope:   stringOrNull(f.VariableScope),
+		Variables:       variables,
+		Status:          stringOrNull(f.Status),
+		SiteURL:         stringOrNull(f.SiteURL),
+		DeployedRegions: stringList(ctx, f.DeployedRegions, diags),
+		CreatedAt:       stringOrNull(f.CreatedAt),
+		UpdatedAt:       stringOrNull(f.UpdatedAt),
+	}
+}
+
+func frontendDomainModelFromAPI(ctx context.Context, prior frontendDomainResourceModel, d *client.FrontendDomain, diags *diag.Diagnostics) frontendDomainResourceModel {
+	hostname := ""
+	if d.RequiredRoutingRecord != nil {
+		hostname = d.RequiredRoutingRecord.Value
+	}
+	if d.RoutingTargetHostname != "" {
+		hostname = d.RoutingTargetHostname
+	}
+	return frontendDomainResourceModel{
+		ProjectID:             prior.ProjectID,
+		FrontendID:            prior.FrontendID,
+		Domain:                types.StringValue(d.Domain),
+		CertificatePEM:        prior.CertificatePEM,
+		PrivateKeyPEM:         prior.PrivateKeyPEM,
+		CertificateChainPEM:   prior.CertificateChainPEM,
+		DomainStatus:          types.StringValue(d.DomainStatus),
+		VerificationStatus:    types.StringValue(d.VerificationStatus),
+		RoutingTargetHostname: stringOrNull(hostname),
+		EffectiveURLs:         stringList(ctx, d.EffectiveURLs, diags),
+		CreatedAt:             stringOrNull(d.CreatedAt),
+		UpdatedAt:             stringOrNull(d.UpdatedAt),
+	}
+}
+
+func frontendFunctionRouteModelFromAPI(projectID, frontendID string, route *client.FrontendFunctionRoute) frontendFunctionRouteResourceModel {
+	return frontendFunctionRouteResourceModel{
+		ID:          types.StringValue(route.ID),
+		ProjectID:   types.StringValue(projectID),
+		FrontendID:  types.StringValue(frontendID),
+		FunctionID:  types.StringValue(route.FunctionID),
+		PathPrefix:  types.StringValue(route.PathPrefix),
+		StripPrefix: types.BoolValue(route.StripPrefix),
+		CreatedAt:   stringOrNull(route.CreatedAt),
+		UpdatedAt:   stringOrNull(route.UpdatedAt),
+	}
+}
+
 // stringOrNull returns a null StringValue for an empty Go string, matching
 // the convention that optional/absent API fields should be represented as
 // null in state rather than an empty string.
