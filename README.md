@@ -5,7 +5,7 @@ A Terraform provider for [Volcano](https://docs.volcano.dev) (api.volcano.dev) �
 ## Requirements
 
 - [Terraform](https://developer.hashicorp.com/terraform/downloads) >= 1.0
-- [Go](https://go.dev/doc/install) >= 1.22 (for building from source)
+- [Go](https://go.dev/doc/install) >= 1.25 (for building from source — this is `terraform-plugin-framework`'s own minimum)
 - A Volcano API token (`VOLCANO_TOKEN`) — a platform token (`pk-`), project access token (`pt-`), or service key, depending on which resources you use. See [Authentication](https://docs.volcano.dev/platform/api-reference/authentication).
 
 ## Using the provider

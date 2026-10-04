@@ -162,5 +162,10 @@ func (p *volcanoProvider) DataSources(_ context.Context) []func() datasource.Dat
 		NewUserGitInstallationRepositoriesDataSource,
 		NewUserImportConnectionsDataSource,
 		NewImportSourcesDataSource,
+		NewProjectDeploymentsDataSource,
+		NewAccountDeploymentsDataSource,
+		NewProjectDomainsDataSource,
+		NewProjectSchedulersDataSource,
+		NewProjectHealthDataSource,
 	}
 }
