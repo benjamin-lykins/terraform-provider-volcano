@@ -222,3 +222,14 @@ type Page[T any] struct {
 func EncodePathSegment(s string) string {
 	return url.PathEscape(s)
 }
+
+// EncodeObjectPath percent-encodes each slash-separated segment of a
+// storage object path independently, preserving the slashes themselves -
+// unlike EncodePathSegment, which would also escape them.
+func EncodeObjectPath(p string) string {
+	segments := strings.Split(p, "/")
+	for i, s := range segments {
+		segments[i] = url.PathEscape(s)
+	}
+	return strings.Join(segments, "/")
+}

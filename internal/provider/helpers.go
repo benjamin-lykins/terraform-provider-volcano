@@ -342,6 +342,56 @@ func frontendFunctionRouteModelFromAPI(projectID, frontendID string, route *clie
 	}
 }
 
+func storageBucketModelFromAPI(ctx context.Context, projectID string, b *client.StorageBucket, diags *diag.Diagnostics) storageBucketResourceModel {
+	m := storageBucketResourceModel{
+		ID:        types.StringValue(b.ID),
+		ProjectID: types.StringValue(projectID),
+		Name:      types.StringValue(b.Name),
+		CreatedAt: stringOrNull(b.CreatedAt),
+		UpdatedAt: stringOrNull(b.UpdatedAt),
+	}
+	if b.FileSizeLimit != nil {
+		m.FileSizeLimit = types.Int64Value(*b.FileSizeLimit)
+	} else {
+		m.FileSizeLimit = types.Int64Null()
+	}
+	if b.AllowedMimeTypes != nil {
+		m.AllowedMimeTypes = stringList(ctx, b.AllowedMimeTypes, diags)
+	} else {
+		m.AllowedMimeTypes = types.ListNull(types.StringType)
+	}
+	return m
+}
+
+func storageBucketPolicyModelFromAPI(projectID, bucketName string, p *client.StorageBucketPolicy) storageBucketPolicyResourceModel {
+	return storageBucketPolicyResourceModel{
+		ID:         types.StringValue(p.ID),
+		ProjectID:  types.StringValue(projectID),
+		BucketName: types.StringValue(bucketName),
+		Name:       types.StringValue(p.Name),
+		Operation:  types.StringValue(p.Operation),
+		Definition: types.StringValue(p.Definition),
+		CreatedAt:  stringOrNull(p.CreatedAt),
+	}
+}
+
+func storageObjectModelFromAPI(projectID, bucketName, path string, source types.String, o *client.StorageObject) storageObjectResourceModel {
+	return storageObjectResourceModel{
+		ID:         types.StringValue(o.ID),
+		ProjectID:  types.StringValue(projectID),
+		BucketName: types.StringValue(bucketName),
+		Path:       types.StringValue(path),
+		Source:     source,
+		IsPublic:   types.BoolValue(o.IsPublic),
+		MimeType:   stringOrNull(o.MimeType),
+		Size:       types.Int64Value(o.Size),
+		ETag:       stringOrNull(o.ETag),
+		PublicURL:  stringOrNull(o.PublicURL),
+		CreatedAt:  stringOrNull(o.CreatedAt),
+		UpdatedAt:  stringOrNull(o.UpdatedAt),
+	}
+}
+
 // stringOrNull returns a null StringValue for an empty Go string, matching
 // the convention that optional/absent API fields should be represented as
 // null in state rather than an empty string.
