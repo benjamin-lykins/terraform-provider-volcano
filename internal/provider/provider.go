@@ -131,6 +131,12 @@ func (p *volcanoProvider) Resources(_ context.Context) []func() resource.Resourc
 		NewProjectAuthHostedPageResource,
 		NewEmailTemplateResource,
 		NewOAuthConfigResource,
+		NewRealtimeConfigResource,
+		NewSandboxResource,
+		NewProjectGitConnectionResource,
+		NewProjectGitDeploySettingsResource,
+		NewProjectSourceExportResource,
+		NewSharedVariablesResource,
 	}
 }
 
@@ -149,5 +155,12 @@ func (p *volcanoProvider) DataSources(_ context.Context) []func() datasource.Dat
 		NewEmailTemplateDefaultsDataSource,
 		NewPasswordPolicyDataSource,
 		NewOAuthProvidersDataSource,
+		NewSandboxPresetsDataSource,
+		NewSandboxDeploymentsDataSource,
+		NewUserGitConnectionsDataSource,
+		NewUserGitInstallationsDataSource,
+		NewUserGitInstallationRepositoriesDataSource,
+		NewUserImportConnectionsDataSource,
+		NewImportSourcesDataSource,
 	}
 }

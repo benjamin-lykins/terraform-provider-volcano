@@ -465,6 +465,72 @@ func oauthConfigModelFromAPI(ctx context.Context, projectID string, c *client.OA
 	}
 }
 
+func realtimeConfigModelFromAPI(projectID string, c *client.RealtimeConfig) realtimeConfigResourceModel {
+	return realtimeConfigResourceModel{
+		ProjectID:              types.StringValue(projectID),
+		Enabled:                types.BoolValue(c.Enabled),
+		BroadcastEnabled:       types.BoolValue(c.BroadcastEnabled),
+		PresenceEnabled:        types.BoolValue(c.PresenceEnabled),
+		PostgresChangesEnabled: types.BoolValue(c.PostgresChangesEnabled),
+	}
+}
+
+func sandboxModelFromAPI(projectID string, s *client.Sandbox) sandboxResourceModel {
+	return sandboxResourceModel{
+		ID:        types.StringValue(s.ID),
+		ProjectID: types.StringValue(projectID),
+		Name:      types.StringValue(s.Name),
+		Preset:    types.StringValue(s.Preset),
+		MemoryMB:  types.Int64Value(s.MemoryMB),
+		Status:    stringOrNull(s.Status),
+		CreatedAt: stringOrNull(s.CreatedAt),
+	}
+}
+
+func projectGitConnectionModelFromAPI(projectID string, connectionID types.String, g *client.ProjectGitConnection) projectGitConnectionResourceModel {
+	return projectGitConnectionResourceModel{
+		ProjectID:        types.StringValue(projectID),
+		ConnectionID:     connectionID,
+		InstallationID:   types.Int64Value(g.RepoInstallationID),
+		RepositoryID:     types.Int64Value(g.RepoID),
+		RepoFullName:     stringOrNull(g.RepoFullName),
+		RootDirectory:    stringOrNull(g.RootDirectory),
+		ProductionBranch: stringOrNull(g.ProductionBranch),
+		UpdatedAt:        stringOrNull(g.UpdatedAt),
+	}
+}
+
+func projectGitDeploySettingsModelFromAPI(projectID string, s *client.ProjectGitDeploySettings) projectGitDeploySettingsResourceModel {
+	return projectGitDeploySettingsResourceModel{
+		ProjectID:         types.StringValue(projectID),
+		AutoDeployEnabled: types.BoolValue(s.AutoDeployEnabled),
+		DeployFunctions:   types.BoolValue(s.DeployFunctions),
+		FrontendName:      stringOrNull(s.FrontendName),
+		FrontendAppRoot:   stringOrNull(s.FrontendAppRoot),
+		UpdatedAt:         stringOrNull(s.UpdatedAt),
+	}
+}
+
+func projectSourceExportModelFromAPI(ctx context.Context, projectID string, productionBranch types.String, result *client.ProjectSourceExportResult, status *client.ProjectSourceExportStatus, diags *diag.Diagnostics) projectSourceExportResourceModel {
+	m := projectSourceExportResourceModel{
+		ProjectID:           types.StringValue(projectID),
+		ProductionBranch:    productionBranch,
+		Mode:                stringOrNull(status.Mode),
+		ExportedAt:          stringOrNull(status.ExportedAt),
+		TransitionStartedAt: stringOrNull(status.TransitionStartedAt),
+		HandedOverAt:        stringOrNull(status.HandedOverAt),
+	}
+	if result != nil {
+		m.RepoFullName = stringOrNull(result.RepoFullName)
+		m.Branch = stringOrNull(result.Branch)
+		m.CommitSHA = stringOrNull(result.CommitSHA)
+		m.FileCount = types.Int64Value(result.FileCount)
+		m.Skipped = stringList(ctx, result.Skipped, diags)
+		m.Omitted = stringList(ctx, result.Omitted, diags)
+	}
+	return m
+}
+
 // stringOrNull returns a null StringValue for an empty Go string, matching
 // the convention that optional/absent API fields should be represented as
 // null in state rather than an empty string.
