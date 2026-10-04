@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"regexp"
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -16,6 +17,7 @@ import (
 
 var pathRootID = path.Root("id")
 var pathProjectID = path.Root("project_id")
+var hexColorRegexp = regexp.MustCompile(`^#[0-9a-fA-F]{6}$`)
 
 // importStateCompositeID parses a comma-separated import ID into the given
 // attribute names, in order (e.g. "project_id,name" for a resource keyed by
@@ -389,6 +391,77 @@ func storageObjectModelFromAPI(projectID, bucketName, path string, source types.
 		PublicURL:  stringOrNull(o.PublicURL),
 		CreatedAt:  stringOrNull(o.CreatedAt),
 		UpdatedAt:  stringOrNull(o.UpdatedAt),
+	}
+}
+
+func projectAuthMethodsModelFromAPI(ctx context.Context, projectID string, m *client.ProjectAuthMethods, diags *diag.Diagnostics) projectAuthMethodsResourceModel {
+	providers := make([]oauthProviderToggleModel, 0, len(m.OAuthProviders))
+	for _, p := range m.OAuthProviders {
+		providers = append(providers, oauthProviderToggleModel{
+			Provider: types.StringValue(p.Provider),
+			Enabled:  types.BoolValue(p.Enabled),
+		})
+	}
+	return projectAuthMethodsResourceModel{
+		ProjectID:           types.StringValue(projectID),
+		EnableAnonymous:     types.BoolValue(m.Anonymous.Enabled),
+		EnableEmailPassword: types.BoolValue(m.EmailPassword.Enabled),
+		OAuthProviders:      providers,
+		AvailableMethods:    stringList(ctx, m.AvailableMethods, diags),
+	}
+}
+
+func projectAuthThemeModelFromAPI(projectID string, t *client.Theme) projectAuthThemeResourceModel {
+	return projectAuthThemeResourceModel{
+		ProjectID: types.StringValue(projectID),
+		Colors: themeColorsModel{
+			Background: types.StringValue(t.Colors.Background),
+			Surface:    types.StringValue(t.Colors.Surface),
+			Text:       types.StringValue(t.Colors.Text),
+			Accent:     types.StringValue(t.Colors.Accent),
+			AccentText: types.StringValue(t.Colors.AccentText),
+		},
+		Font:    stringOrNull(t.Font),
+		Scale:   stringOrNull(t.Scale),
+		Density: stringOrNull(t.Density),
+		Radius:  stringOrNull(t.Radius),
+	}
+}
+
+func projectAuthHostedPageModelFromAPI(projectID, pageType string, p *client.AuthHostedPage) projectAuthHostedPageResourceModel {
+	return projectAuthHostedPageResourceModel{
+		ProjectID: types.StringValue(projectID),
+		PageType:  types.StringValue(pageType),
+		HTML:      types.StringValue(p.HTML),
+		CSS:       stringOrNull(p.CSS),
+	}
+}
+
+func emailTemplateModelFromAPI(projectID string, t *client.EmailTemplate) emailTemplateResourceModel {
+	return emailTemplateResourceModel{
+		ID:           types.StringValue(t.ID),
+		ProjectID:    types.StringValue(projectID),
+		TemplateType: types.StringValue(t.TemplateType),
+		Subject:      types.StringValue(t.Subject),
+		HTMLBody:     types.StringValue(t.HTMLBody),
+		TextBody:     types.StringValue(t.TextBody),
+		CreatedAt:    stringOrNull(t.CreatedAt),
+		UpdatedAt:    stringOrNull(t.UpdatedAt),
+	}
+}
+
+func oauthConfigModelFromAPI(ctx context.Context, projectID string, c *client.OAuthConfig, diags *diag.Diagnostics) oauthConfigResourceModel {
+	return oauthConfigResourceModel{
+		ID:           types.StringValue(c.ID),
+		ProjectID:    types.StringValue(projectID),
+		Provider:     types.StringValue(c.Provider),
+		ClientID:     stringOrNull(c.ClientID),
+		ClientSecret: stringOrNull(c.ClientSecret),
+		RedirectURL:  stringOrNull(c.RedirectURL),
+		Scopes:       stringList(ctx, c.Scopes, diags),
+		Enabled:      types.BoolValue(c.Enabled),
+		CreatedAt:    stringOrNull(c.CreatedAt),
+		UpdatedAt:    stringOrNull(c.UpdatedAt),
 	}
 }
 

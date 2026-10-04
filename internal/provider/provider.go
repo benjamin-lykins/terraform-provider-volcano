@@ -124,6 +124,13 @@ func (p *volcanoProvider) Resources(_ context.Context) []func() resource.Resourc
 		NewStorageBucketResource,
 		NewStorageBucketPolicyResource,
 		NewStorageObjectResource,
+		NewProjectAuthConfigResource,
+		NewProjectAuthMethodsResource,
+		NewProjectAuthThemeResource,
+		NewProjectAuthPageLayoutResource,
+		NewProjectAuthHostedPageResource,
+		NewEmailTemplateResource,
+		NewOAuthConfigResource,
 	}
 }
 
@@ -139,5 +146,8 @@ func (p *volcanoProvider) DataSources(_ context.Context) []func() datasource.Dat
 		NewDurableFunctionDeploymentsDataSource,
 		NewFrontendDeploymentsDataSource,
 		NewStorageObjectsDataSource,
+		NewEmailTemplateDefaultsDataSource,
+		NewPasswordPolicyDataSource,
+		NewOAuthProvidersDataSource,
 	}
 }
