@@ -2,6 +2,7 @@ package provider
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"strings"
 
@@ -151,6 +152,138 @@ func databaseRestoreModelFromAPI(projectID, databaseName string, r *client.Datab
 		CreatedAt:    stringOrNull(r.CreatedAt),
 		CompletedAt:  stringOrNull(r.CompletedAt),
 	}
+}
+
+// functionModelFromAPI builds state for a function resource. variableScope
+// and variables are never echoed back by the API (write-only at create
+// time), so the caller threads through the prior plan/state value, the
+// same way the project resource handles template_id.
+func functionModelFromAPI(ctx context.Context, projectID string, source, variableScope types.String, variables types.List, f *client.Function, diags *diag.Diagnostics) functionResourceModel {
+	return functionResourceModel{
+		ID:              types.StringValue(f.ID),
+		ProjectID:       types.StringValue(projectID),
+		Name:            types.StringValue(f.Name),
+		Runtime:         types.StringValue(f.Runtime),
+		Source:          source,
+		Handler:         stringOrNull(f.Handler),
+		HTTPAuthMode:    stringOrNull(f.HTTPAuthMode),
+		InvocationMode:  stringOrNull(f.InvocationMode),
+		IsPublic:        types.BoolValue(f.IsPublic),
+		OpenAPISpec:     stringOrNull(f.OpenAPISpec),
+		VariableScope:   variableScope,
+		Variables:       variables,
+		Status:          stringOrNull(f.Status),
+		InvokeURL:       stringOrNull(f.InvokeURL),
+		DeployedRegions: stringList(ctx, f.DeployedRegions, diags),
+		CreatedAt:       stringOrNull(f.CreatedAt),
+		UpdatedAt:       stringOrNull(f.UpdatedAt),
+	}
+}
+
+func durableFunctionModelFromAPI(ctx context.Context, projectID string, source, variableScope types.String, variables types.List, f *client.DurableFunction, diags *diag.Diagnostics) durableFunctionResourceModel {
+	return durableFunctionResourceModel{
+		ID:              types.StringValue(f.ID),
+		ProjectID:       types.StringValue(projectID),
+		Name:            types.StringValue(f.Name),
+		Runtime:         types.StringValue(f.Runtime),
+		Source:          source,
+		Handler:         stringOrNull(f.Handler),
+		IsPublic:        types.BoolValue(f.IsPublic),
+		VariableScope:   variableScope,
+		Variables:       variables,
+		Status:          stringOrNull(f.Status),
+		DeployedRegions: stringList(ctx, f.DeployedRegions, diags),
+		CreatedAt:       stringOrNull(f.CreatedAt),
+		UpdatedAt:       stringOrNull(f.UpdatedAt),
+	}
+}
+
+func schedulerCreateRequestFromModel(ctx context.Context, name types.String, enabled types.Bool, cron, payload types.String, regions types.List, diags *diag.Diagnostics) (client.CreateFunctionSchedulerRequest, bool) {
+	in := client.CreateFunctionSchedulerRequest{
+		Name:           name.ValueString(),
+		CronExpression: cron.ValueString(),
+	}
+	if !enabled.IsNull() && !enabled.IsUnknown() {
+		v := enabled.ValueBool()
+		in.Enabled = &v
+	}
+	if !payload.IsNull() && !payload.IsUnknown() && payload.ValueString() != "" {
+		var m map[string]any
+		if err := json.Unmarshal([]byte(payload.ValueString()), &m); err != nil {
+			diags.AddError("Invalid payload", "payload must be a JSON-encoded object: "+err.Error())
+			return in, false
+		}
+		in.Payload = m
+	}
+	if !regions.IsNull() && !regions.IsUnknown() {
+		var r []string
+		diags.Append(regions.ElementsAs(ctx, &r, false)...)
+		if diags.HasError() {
+			return in, false
+		}
+		in.Regions = r
+	}
+	return in, true
+}
+
+func schedulerUpdateRequestFromModel(ctx context.Context, plan, state functionSchedulerResourceModel, diags *diag.Diagnostics) (client.UpdateFunctionSchedulerRequest, bool) {
+	in := client.UpdateFunctionSchedulerRequest{}
+	if !plan.Name.Equal(state.Name) {
+		v := plan.Name.ValueString()
+		in.Name = &v
+	}
+	if !plan.Enabled.Equal(state.Enabled) {
+		v := plan.Enabled.ValueBool()
+		in.Enabled = &v
+	}
+	if !plan.CronExpression.Equal(state.CronExpression) {
+		v := plan.CronExpression.ValueString()
+		in.CronExpression = &v
+	}
+	if !plan.Payload.Equal(state.Payload) && !plan.Payload.IsNull() && plan.Payload.ValueString() != "" {
+		var m map[string]any
+		if err := json.Unmarshal([]byte(plan.Payload.ValueString()), &m); err != nil {
+			diags.AddError("Invalid payload", "payload must be a JSON-encoded object: "+err.Error())
+			return in, false
+		}
+		in.Payload = m
+	}
+	if !plan.Regions.Equal(state.Regions) {
+		var r []string
+		diags.Append(plan.Regions.ElementsAs(ctx, &r, false)...)
+		if diags.HasError() {
+			return in, false
+		}
+		in.Regions = r
+	}
+	return in, true
+}
+
+func functionSchedulerModelFromAPI(ctx context.Context, projectID, functionID string, s *client.FunctionScheduler) (functionSchedulerResourceModel, diag.Diagnostics) {
+	var diags diag.Diagnostics
+	m := functionSchedulerResourceModel{
+		ID:             types.StringValue(s.ID),
+		ProjectID:      types.StringValue(projectID),
+		FunctionID:     types.StringValue(functionID),
+		Name:           types.StringValue(s.Name),
+		Enabled:        types.BoolValue(s.Enabled),
+		CronExpression: types.StringValue(s.CronExpression),
+		Regions:        stringList(ctx, s.Regions, &diags),
+		RunCount:       types.Int64Value(s.RunCount),
+		NextRunAt:      stringOrNull(s.NextRunAt),
+		CreatedAt:      stringOrNull(s.CreatedAt),
+	}
+	if len(s.Payload) > 0 {
+		b, err := json.Marshal(s.Payload)
+		if err != nil {
+			diags.AddError("Error encoding scheduler payload", err.Error())
+		} else {
+			m.Payload = types.StringValue(string(b))
+		}
+	} else {
+		m.Payload = types.StringNull()
+	}
+	return m, diags
 }
 
 // stringOrNull returns a null StringValue for an empty Go string, matching

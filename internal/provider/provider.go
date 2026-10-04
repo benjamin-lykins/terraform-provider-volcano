@@ -113,6 +113,10 @@ func (p *volcanoProvider) Resources(_ context.Context) []func() resource.Resourc
 		NewDatabaseBackupResource,
 		NewDatabaseBackupScheduleResource,
 		NewDatabaseRestoreResource,
+		NewFunctionResource,
+		NewFunctionSchedulerResource,
+		NewDurableFunctionResource,
+		NewDurableFunctionSchedulerResource,
 	}
 }
 
@@ -122,5 +126,9 @@ func (p *volcanoProvider) DataSources(_ context.Context) []func() datasource.Dat
 		NewProjectsDataSource,
 		NewDatabaseRegionsDataSource,
 		NewPostgresVersionsDataSource,
+		NewFunctionRegionsDataSource,
+		NewFunctionRuntimesDataSource,
+		NewFunctionDeploymentsDataSource,
+		NewDurableFunctionDeploymentsDataSource,
 	}
 }

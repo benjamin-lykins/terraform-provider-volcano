@@ -10,6 +10,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"mime/multipart"
 	"net/http"
 	"net/url"
 	"strings"
@@ -127,6 +128,82 @@ func (c *Client) Request(ctx context.Context, method, path string, query url.Val
 		}
 	}
 
+	return nil
+}
+
+// MultipartField is one non-file form field in a multipart request.
+type MultipartField struct {
+	Name  string
+	Value string
+}
+
+// MultipartFile describes the single file part of a multipart request.
+type MultipartFile struct {
+	FieldName string
+	Filename  string
+	Content   []byte
+}
+
+// MultipartRequest performs a multipart/form-data request, used by the
+// handful of endpoints (function/durable-function create, project logo
+// upload) that accept a file alongside ordinary form fields.
+func (c *Client) MultipartRequest(ctx context.Context, method, path string, fields []MultipartField, file MultipartFile, out interface{}) error {
+	var body bytes.Buffer
+	writer := multipart.NewWriter(&body)
+
+	for _, f := range fields {
+		if err := writer.WriteField(f.Name, f.Value); err != nil {
+			return fmt.Errorf("writing multipart field %q: %w", f.Name, err)
+		}
+	}
+	if file.FieldName != "" {
+		part, err := writer.CreateFormFile(file.FieldName, file.Filename)
+		if err != nil {
+			return fmt.Errorf("building multipart file part: %w", err)
+		}
+		if _, err := part.Write(file.Content); err != nil {
+			return fmt.Errorf("writing multipart file content: %w", err)
+		}
+	}
+	if err := writer.Close(); err != nil {
+		return fmt.Errorf("closing multipart writer: %w", err)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, method, c.endpoint+path, &body)
+	if err != nil {
+		return fmt.Errorf("building request: %w", err)
+	}
+	req.Header.Set("Content-Type", writer.FormDataContentType())
+	req.Header.Set("Accept", "application/json")
+	if c.token != "" {
+		req.Header.Set("Authorization", "Bearer "+c.token)
+	}
+
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return fmt.Errorf("performing request: %w", err)
+	}
+	defer resp.Body.Close()
+
+	respBytes, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return fmt.Errorf("reading response body: %w", err)
+	}
+
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		apiErr := &APIError{StatusCode: resp.StatusCode, Raw: string(respBytes)}
+		var eb errorBody
+		if json.Unmarshal(respBytes, &eb) == nil {
+			apiErr.Message = eb.Error
+		}
+		return apiErr
+	}
+
+	if out != nil && len(respBytes) > 0 {
+		if err := json.Unmarshal(respBytes, out); err != nil {
+			return fmt.Errorf("decoding response body: %w", err)
+		}
+	}
 	return nil
 }
 
