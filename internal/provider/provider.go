@@ -103,6 +103,11 @@ func (p *volcanoProvider) Configure(ctx context.Context, req provider.ConfigureR
 func (p *volcanoProvider) Resources(_ context.Context) []func() resource.Resource {
 	return []func() resource.Resource{
 		NewProjectResource,
+		NewProjectAccessTokenResource,
+		NewAnonKeyResource,
+		NewServiceKeyResource,
+		NewProjectVariableResource,
+		NewProjectLogoResource,
 	}
 }
 
