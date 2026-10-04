@@ -97,6 +97,62 @@ func projectVariableModelFromAPI(projectID string, v *client.Variable) projectVa
 	}
 }
 
+func databaseModelFromAPI(d *client.Database) databaseResourceModel {
+	return databaseResourceModel{
+		ID:               types.StringValue(d.ID),
+		ProjectID:        types.StringValue(d.ProjectID),
+		Name:             types.StringValue(d.Name),
+		Region:           types.StringValue(d.Region),
+		PGVersion:        types.StringValue(d.PGVersion),
+		DatabaseType:     types.StringValue(d.DatabaseType),
+		Status:           types.StringValue(d.Status),
+		ConnectionString: stringOrNull(d.ConnectionString),
+		CreatedAt:        stringOrNull(d.CreatedAt),
+		UpdatedAt:        stringOrNull(d.UpdatedAt),
+	}
+}
+
+func databaseBranchModelFromAPI(projectID, databaseName string, b *client.DatabaseBranch) databaseBranchResourceModel {
+	return databaseBranchResourceModel{
+		ID:               types.StringValue(b.ID),
+		ProjectID:        types.StringValue(projectID),
+		DatabaseName:     types.StringValue(databaseName),
+		Name:             types.StringValue(b.Name),
+		TTLSeconds:       types.Int64Value(b.TTLSeconds),
+		Status:           stringOrNull(b.Status),
+		ConnectionString: stringOrNull(b.ConnectionString),
+		ExpiresAt:        stringOrNull(b.ExpiresAt),
+		CreatedAt:        stringOrNull(b.CreatedAt),
+	}
+}
+
+func databaseBackupModelFromAPI(projectID, databaseName string, b *client.DatabaseBackup) databaseBackupResourceModel {
+	return databaseBackupResourceModel{
+		ProjectID:    types.StringValue(projectID),
+		DatabaseName: types.StringValue(databaseName),
+		Name:         types.StringValue(b.Name),
+		Source:       stringOrNull(b.Source),
+		SizeBytes:    types.Int64Value(b.SizeBytes),
+		CreatedAt:    stringOrNull(b.CreatedAt),
+		ExpiresAt:    stringOrNull(b.ExpiresAt),
+	}
+}
+
+func databaseRestoreModelFromAPI(projectID, databaseName string, r *client.DatabaseRestore) databaseRestoreResourceModel {
+	return databaseRestoreResourceModel{
+		ID:           types.StringValue(r.ID),
+		ProjectID:    types.StringValue(projectID),
+		DatabaseName: types.StringValue(databaseName),
+		BackupName:   stringOrNull(r.BackupName),
+		RestoreTo:    stringOrNull(r.RestoreTo),
+		Kind:         stringOrNull(r.Kind),
+		Status:       stringOrNull(r.Status),
+		Error:        stringOrNull(r.Error),
+		CreatedAt:    stringOrNull(r.CreatedAt),
+		CompletedAt:  stringOrNull(r.CompletedAt),
+	}
+}
+
 // stringOrNull returns a null StringValue for an empty Go string, matching
 // the convention that optional/absent API fields should be represented as
 // null in state rather than an empty string.
