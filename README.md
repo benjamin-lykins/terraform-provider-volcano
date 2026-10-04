@@ -2,6 +2,10 @@
 
 A Terraform provider for [Volcano](https://docs.volcano.dev) (api.volcano.dev) — manage projects, databases, functions, durable functions, frontends, storage, auth configuration, sandboxes, and related platform resources as code.
 
+## Disclaimer
+
+This is not an offical provider nor am I an employee of Kong. 
+
 ## Requirements
 
 - [Terraform](https://developer.hashicorp.com/terraform/downloads) >= 1.0
