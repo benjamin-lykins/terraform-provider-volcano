@@ -1,0 +1,11 @@
+terraform-provider-volcano
+terraform-provider-volcano_v*
+dist/
+.terraform/
+*.tfstate
+*.tfstate.*
+.terraform.lock.hcl
+crash.log
+crash.*.log
+*.swp
+.DS_Store
