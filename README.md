@@ -4,7 +4,7 @@ A Terraform provider for [Volcano](https://docs.volcano.dev) (api.volcano.dev) â
 
 ## Disclaimer
 
-This is not an offical provider nor am I an employee of Kong. 
+This is not an official provider nor am I an employee of Kong. 
 
 ## Requirements
 
